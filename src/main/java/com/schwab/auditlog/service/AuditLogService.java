@@ -85,7 +85,11 @@ public class AuditLogService {
             long nextSequenceNumber = last.map(e -> e.getSequenceNumber() + 1).orElse(1L);
             String previousHash = last.map(AuditEvent::getChainHash).orElse(genesisHash);
 
-            Instant timestamp = Instant.now(); // server-assigned; see docs/ARCHITECTURE.md
+            // Truncated to milliseconds because MongoDB's BSON Date type only stores millisecond
+            // precision -- if we hashed the full-precision Instant.now() value, the hash computed
+            // here would never match what verify() recomputes after reading the record back from
+            // Mongo, since the sub-millisecond digits get silently dropped on the round trip
+            Instant timestamp = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS); // server-assigned; see docs/ARCHITECTURE.md
 
             String contentHash = hashingService.computeContentHash(
                     nextSequenceNumber, request.getEventType(), request.getActorId(),
