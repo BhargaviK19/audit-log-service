@@ -1,0 +1,66 @@
+{
+  "info": {
+    "name": "Audit Log Service",
+    "description": "Tamper-evident, append-only audit log service. Run requests in order: Append Event 1, Append Event 2, Verify Chain (Intact), then use mongosh to edit a record directly, then Verify Chain (Tampered).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" }
+  ],
+  "item": [
+    {
+      "name": "1. Append Event (Login)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventType\": \"USER_LOGIN\",\n  \"actorId\": \"user-42\",\n  \"resourceType\": \"USER_ACCOUNT\",\n  \"resourceId\": \"acct-42\",\n  \"payload\": { \"ip\": \"10.0.0.7\", \"mfa\": true }\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/audit/events", "host": ["{{baseUrl}}"], "path": ["audit", "events"] }
+      }
+    },
+    {
+      "name": "2. Append Event (Balance Update)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventType\": \"RECORD_UPDATED\",\n  \"actorId\": \"svc-billing\",\n  \"resourceType\": \"ACCOUNT\",\n  \"resourceId\": \"acct-42\",\n  \"payload\": { \"balance\": 150.00 }\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/audit/events", "host": ["{{baseUrl}}"], "path": ["audit", "events"] }
+      }
+    },
+    {
+      "name": "3. Get Event by ID",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/audit/events/REPLACE_WITH_ID_FROM_STEP_1", "host": ["{{baseUrl}}"], "path": ["audit", "events", "REPLACE_WITH_ID_FROM_STEP_1"] }
+      }
+    },
+    {
+      "name": "4. Query Events (filtered)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/audit/events?actorId=user-42&page=0&size=20",
+          "host": ["{{baseUrl}}"],
+          "path": ["audit", "events"],
+          "query": [
+            { "key": "actorId", "value": "user-42" },
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "20" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Verify Chain",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/audit/verify", "host": ["{{baseUrl}}"], "path": ["audit", "verify"] }
+      }
+    }
+  ]
+}
